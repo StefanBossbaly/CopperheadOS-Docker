@@ -53,14 +53,24 @@ repo sync -j${NUM_OF_THREADS}
 source script/copperhead.sh
 choosecombo release aosp_${DEVICE} user
 
+# Download and move the vendor specific folder
 vendor/android-prepare-vendor/execute-all.sh -d ${DEVICE} -b ${BUILD_ID} -o vendor/android-prepare-vendor
 mkdir -p vendor/google_devices
 rm -rf vendor/google_devices/${DEVICE}
-rm -fr vendor/google_devices/muskie
-
 mv vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${DEVICE} vendor/google_devices
-# TODO remove hardcoded value
-mv vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/muskie vendor/google_devices
+
+# The smaller variant of the pixels have to move their bigger brother's folder as well
+if ["$DEVICE" = "walleye" || "$DEVICE" = "sailfish"]; then
+  big_brother = ""
+  if ["$DEVICE" = "walleye"]; then
+    big_brother = "muskie"
+  else
+    big_brother = "marlin"
+  fi
+  
+  rm -fr vendor/google_devices/${big_brother}
+  mv vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${big_brother} vendor/google_devices
+fi
 
 # If needed, apply the microG's signature spoofing patch
 if [ "$SIGNATURE_SPOOFING" = "yes" ] || [ "$SIGNATURE_SPOOFING" = "restricted" ]; then
@@ -81,8 +91,6 @@ if [ "$SIGNATURE_SPOOFING" = "yes" ] || [ "$SIGNATURE_SPOOFING" = "restricted" ]
   mkdir -p "vendor/$vendor/overlay/microg/frameworks/base/core/res/res/values/"
   cp /root/signature_spoofing_patches/frameworks_base_config.xml "vendor/$vendor/overlay/microg/frameworks/base/core/res/res/values/config.xml"
 fi
-
-
 
 # Build project
 make target-files-package -j${NUM_OF_THREADS}
