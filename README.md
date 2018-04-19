@@ -21,4 +21,5 @@ $ sudo docker run \
     -e BUILD_TAG="OPM2.171019.029.2018.04.02.21" \
     -e BUILD_ID="OPM2.171019.029" \
     -e NUM_OF_THREADS=16
+    bflux/copperheados-docker
 ```
