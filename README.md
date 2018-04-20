@@ -16,7 +16,7 @@ Docker container for building CopperheadOS. Still very much a work in progress
 ```
 $ sudo docker run \
     -v /home/stefan/copperheados/src:/srv/src \
-    -v /home/stefan/copperheados/ccache:/src/ccache \
+    -v /home/stefan/copperheados/ccache:/srv/ccache \
     -e DEVICE="walleye" \
     -e BUILD_TAG="OPM2.171019.029.2018.04.02.21" \
     -e BUILD_ID="OPM2.171019.029" \
