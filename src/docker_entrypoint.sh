@@ -56,13 +56,21 @@ if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
   fi
 fi
 
+# Copy over the local_manifests
+mkdir -p .repo/local_manifests
+rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" .repo/local_manifests/
+
 # Sync work dir
 repo sync -j${NUM_OF_THREADS}
+
+# Clean out any changes
+repo forall -c 'git reset -q --hard ; git clean -q -fd' 
 
 # Initialize CCache if it will be used
 if [ "$USE_CCACHE" = 1 ]; then
   "$SRC_DIR/prebuilts/misc/linux-x86/ccache/ccache" -M $CCACHE_SIZE 2>&1
 fi
+
 
 # Clean out any unsaved changes out of the src repo
 for path in "frameworks/base"; do
@@ -106,6 +114,16 @@ if [ "$SIGNATURE_SPOOFING" = "yes" ]; then
   git clean -q -f
   cd ../..
 fi
+
+# Add custom packages to be installed
+if ! [ -z "$CUSTOM_PACKAGES" ]; then
+  echo ">> [$(date)] Adding custom packages ($CUSTOM_PACKAGES)"
+  sed -i "1s;^;PRODUCT_PACKAGES += $CUSTOM_PACKAGES\n\n;" build/target/product/core.mk
+fi
+
+# Apply FDroid patch
+key=$(keytool -list -printcert -file "$KEYS_DIR/releasekey.x509.pem" | grep 'SHA256:' | tr -d ':' | cut -d' ' -f 3)
+sed -i -e "s/67760df25e94ae6c955d9e17ca1bc8e195da5d91d5a58023805ab3579463d1b8/${key}/g" "$SRC_DIR/packages/apps/F-Droid/privileged-extension/app/src/main/java/org/fdroid/fdroid/privileged/ClientWhitelist.java"
 
 # Build project
 make target-files-package -j${NUM_OF_THREADS}

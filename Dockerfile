@@ -6,7 +6,10 @@ MAINTAINER Stefan Bossbaly <sbossb@gmail.com>
 ########################################################
 ENV SRC_DIR /srv/src
 ENV CCACHE_DIR /srv/ccache
+ENV TMP_DIR /srv/tmp
 ENV KEYS_DIR /srv/keys
+ENV LMANIFEST_DIR /srv/local_manifests
+ENV ZIP_DIR /srv/zips
 
 # By default we want to use CCACHE, you can disable this
 # WARNING: disabling this may slow down a lot your builds!
@@ -54,7 +57,10 @@ ENV NUM_OF_THREADS 8
 ########################################################
 VOLUME $SRC_DIR
 VOLUME $CCACHE_DIR
+VOLUME $TMP_DIR
 VOLUME $KEYS_DIR
+VOLUME $LMANIFEST_DIR
+VOLUME $ZIP_DIR
 
 ########################################################
 # Copy required files
@@ -66,7 +72,10 @@ COPY src/ /root/
 ########################################################
 RUN mkdir -p $SRC_DIR
 RUN mkdir -p $CCACHE_DIR
+RUN mkdir -p $TMP_DIR
 RUN mkdir -p $KEYS_DIR
+RUN mkdir -p $LMANIFEST_DIR
+RUN mkdir -p $ZIP_DIR
 
 ########################################################
 # Install Dependencies
