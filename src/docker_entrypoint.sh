@@ -30,18 +30,19 @@ fi
 # Check to make sure we have the correct keys
 if [ -z "$(ls -A "$KEYS_DIR")" ]; then
   echo ">> [$(date)] Generating new keys"
-  for c in "{keys[@]}"; do
+  for c in "${keys[@]}"; do
     echo ">> [$(date)]  Generating $c..."
     "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< '' &> /dev/null
   done
 else
-  for c in "{keys[@]}"; do
+  for c in "${keys[@]}"; do
     for e in pk8 x509.pem; do
       if [ ! -f "$KEYS_DIR/$c.$e" ]; then
         echo ">> [$(date)] \"\$KEYS_DIR/$c.$e\" is missing"
         exit 1
       fi
-   done
+    done
+  done
 fi
 
 if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
