@@ -1,6 +1,12 @@
 #!/bin/bash
 set -e
 
+# We only support the pixel devices
+if [[ $DEVICE != "sailfish" ]] && [[ $DEVICE != "marlin" ]] && [[ $DEVICE != "walleye" ]] && [[ $DEVICE != "taimen" ]]; then
+  echo ">> [$(date)] Currently this container only supports building for pixel devices"
+  exit 1
+fi
+
 # Initialize Git user information
 git config --global user.name $USER_NAME
 git config --global user.email $USER_MAIL
@@ -14,29 +20,36 @@ if [ ! -d .repo ]; then
   repo init -u https://github.com/CopperheadOS/platform_manifest.git -b refs/tags/${BUILD_TAG}
 fi
 
-if [ "$SIGN_BUILDS" = true ]; then
-  if [ -z "$(ls -A "$KEYS_DIR")" ]; then
-    echo ">> [$(date)] SIGN_BUILDS = true but empty \$KEYS_DIR, generating new keys"
-    for c in releasekey platform shared media; do
-      echo ">> [$(date)]  Generating $c..."
-      "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< '' &> /dev/null
-    done
-  else
-    for c in releasekey platform shared media; do
-      for e in pk8 x509.pem; do
-        if [ ! -f "$KEYS_DIR/$c.$e" ]; then
-          echo ">> [$(date)] SIGN_BUILDS = true and not empty \$KEYS_DIR, but \"\$KEYS_DIR/$c.$e\" is missing"
-          exit 1
-        fiec
-      done
-    done
-  fi
-  
+# Ensure we have the correct keys
+if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
+  keys=(releasekey platform shared media)
+else
+  keys=(releasekey platform shared media verity)
+fi
+
+# Check to make sure we have the correct keys
+if [ -z "$(ls -A "$KEYS_DIR")" ]; then
+  echo ">> [$(date)] Generating new keys"
+  for c in "{keys[@]}"; do
+    echo ">> [$(date)]  Generating $c..."
+    "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< '' &> /dev/null
+  done
+else
+  for c in "{keys[@]}"; do
+    for e in pk8 x509.pem; do
+      if [ ! -f "$KEYS_DIR/$c.$e" ]; then
+        echo ">> [$(date)] \"\$KEYS_DIR/$c.$e\" is missing"
+        exit 1
+      fi
+   done
+fi
+
+if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
   if [ ! -f "$KEYS_DIR/avb.pem" ]; then
     echo ">> [$(date)]  Generating avb.pem..."
     openssl genrsa -out "$KEYS_DIR/avb.pem" 2048
   fi
-  
+
   if [ ! -f "$KEYS_DIR/avb_pkmd.bin" ]; then
     "$SRC_DIR/external/avb/avbtool" extract_public_key --key "$KEYS_DIR/avb.pem" --output "$KEYS_DIR/avb_pkmd.bin"
   fi
@@ -47,8 +60,18 @@ repo sync -j${NUM_OF_THREADS}
 
 # Initialize CCache if it will be used
 if [ "$USE_CCACHE" = 1 ]; then
-	"$SRC_DIR/prebuilts/misc/linux-x86/ccache/ccache" -M $CCACHE_SIZE 2>&1
+  "$SRC_DIR/prebuilts/misc/linux-x86/ccache/ccache" -M $CCACHE_SIZE 2>&1
 fi
+
+# Clean out any unsaved changes out of the src repo
+for path in "frameworks/base"; do
+  if [ -d "$path" ]; then
+    cd "$path"
+    git reset -q --hard
+    git clean -q -fd
+    cd "$SRC_DIR"
+  fi
+done
 
 # Select device
 source script/copperhead.sh
@@ -74,29 +97,22 @@ if [ "$DEVICE" = "walleye" ] || [ "$DEVICE" = "sailfish" ]; then
 fi
 
 # If needed, apply the microG's signature spoofing patch
-if [ "$SIGNATURE_SPOOFING" = "yes" ] || [ "$SIGNATURE_SPOOFING" = "restricted" ]; then
+if [ "$SIGNATURE_SPOOFING" = "yes" ]; then
   cd frameworks/base
-  if [ "$SIGNATURE_SPOOFING" = "yes" ]; then
-    patch_name = "android_frameworks_base-O.patch"
-	echo ">> [$(date)] Applying the standard signature spoofing patch ($patch_name) to frameworks/base"
-	echo ">> [$(date)] WARNING: the standard signature spoofing patch introduces a security threat"
-	patch --quiet -p1 -i "/root/signature_spoofing_patches/$patch_name"
-  else
-    echo ">> [$(date)] Applying the restricted signature spoofing patch (based on $patch_name) to frameworks/base"
-	sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/signature_spoofing_patches/$patch_name" | patch --quiet -p1
-  fi
+  patch_name="android_frameworks_base-O.patch"
+  echo ">> [$(date)] Applying the restricted signature spoofing patch (based on $patch_name) to frameworks/base"
+  sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/${patch_name}" | patch --quiet -p1
   git clean -q -f
   cd ../..
-
-  # Override device-specific settings for the location providers
-  mkdir -p "vendor/$vendor/overlay/microg/frameworks/base/core/res/res/values/"
-  cp /root/signature_spoofing_patches/frameworks_base_config.xml "vendor/$vendor/overlay/microg/frameworks/base/core/res/res/values/config.xml"
 fi
-
-# Link key directory
-ln -s "$KEYS_DIR" "$SRC_DIR/keys/${DEVICE}"
 
 # Build project
 make target-files-package -j${NUM_OF_THREADS}
 make brillo_update_payload -j${NUM_OF_THREADS}
+
+# Link key directory
+mkdir -p "$SRC_DIR/keys"
+ln -sf "$KEYS_DIR" "$SRC_DIR/keys/${DEVICE}"
+
+# Sign package
 script/release.sh ${DEVICE}
