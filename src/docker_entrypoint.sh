@@ -133,5 +133,13 @@ make brillo_update_payload -j${NUM_OF_THREADS}
 mkdir -p "$SRC_DIR/keys"
 ln -sf "$KEYS_DIR" "$SRC_DIR/keys/${DEVICE}"
 
-# Sign package
+# Generate release files from target files
 script/release.sh ${DEVICE}
+
+# Move zip files to ZIP_DIR
+cd "$SRC_DIR/out/release-${DEVICE}-${BUILD_NUMBER}"
+cp -f *.zip "$ZIP_DIR"
+cp -f *.tar.xz "$ZIP_DIR"
+
+
+
