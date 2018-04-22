@@ -64,23 +64,12 @@ rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" .repo/local_
 repo sync -j${NUM_OF_THREADS}
 
 # Clean out any changes
-repo forall -c 'git reset -q --hard ; git clean -q -fd' 
+repo forall -c 'git reset -q --hard ; git clean -q -fd'
 
 # Initialize CCache if it will be used
 if [ "$USE_CCACHE" = 1 ]; then
   "$SRC_DIR/prebuilts/misc/linux-x86/ccache/ccache" -M $CCACHE_SIZE 2>&1
 fi
-
-
-# Clean out any unsaved changes out of the src repo
-for path in "frameworks/base"; do
-  if [ -d "$path" ]; then
-    cd "$path"
-    git reset -q --hard
-    git clean -q -fd
-    cd "$SRC_DIR"
-  fi
-done
 
 # Select device
 source script/copperhead.sh
@@ -100,7 +89,7 @@ if [ "$DEVICE" = "walleye" ] || [ "$DEVICE" = "sailfish" ]; then
   else
     big_brother="marlin"
   fi
-  
+
   rm -fr vendor/google_devices/${big_brother}
   mv vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${big_brother} vendor/google_devices
 fi
@@ -140,6 +129,3 @@ script/release.sh ${DEVICE}
 cd "$SRC_DIR/out/release-${DEVICE}-${BUILD_NUMBER}"
 cp -f *.zip "$ZIP_DIR"
 cp -f *.tar.xz "$ZIP_DIR"
-
-
-
