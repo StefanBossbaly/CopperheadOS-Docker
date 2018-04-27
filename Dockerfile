@@ -96,6 +96,11 @@ ADD https://commondatastorage.googleapis.com/git-repo-downloads/repo /usr/local/
 RUN chmod 755 /usr/local/bin/*
 
 ########################################################
+# Install Google Tools
+########################################################
+RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git /usr/local/sbin
+
+########################################################
 # Set the work directory
 ########################################################
 WORKDIR $SRC_DIR
