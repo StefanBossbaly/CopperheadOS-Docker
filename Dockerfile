@@ -90,12 +90,6 @@ RUN apt-get install -y bc bison build-essential ccache cron curl flex \
       squashfs-tools wget xdelta3 xsltproc yasm zip zlib1g-dev cgpt bsdmainutils
 
 ########################################################
-# Install Repo Util
-########################################################
-ADD https://commondatastorage.googleapis.com/git-repo-downloads/repo /usr/local/bin/
-RUN chmod 755 /usr/local/bin/*
-
-########################################################
 # Install Google Tools
 ########################################################
 RUN git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git /usr/local/sbin
