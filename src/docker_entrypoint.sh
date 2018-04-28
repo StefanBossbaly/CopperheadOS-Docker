@@ -73,7 +73,7 @@ fi
 if [ ! -d "$SRC_DIR/chromium" ]; then
   mkdir -p "$SRC_DIR/chromium"
   cd "$SRC_DIR/chromium"
-  fetch --nohooks android --target_os_only=true
+  yes | fetch --nohooks android --target_os_only=true
 fi
 
 # Sync the chromium build with the latest
