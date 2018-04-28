@@ -15,10 +15,8 @@ git config --global color.ui false
 # Build
 cd "$SRC_DIR"
 
-# Initialize repo
-if [ ! -d .repo ]; then
-  repo init -u https://github.com/CopperheadOS/platform_manifest.git -b refs/tags/${BUILD_TAG}
-fi
+# (Re)Initialize repo
+repo init -u https://github.com/CopperheadOS/platform_manifest.git -b refs/tags/${BUILD_TAG}
 
 # Ensure we have the correct keys
 if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
@@ -61,7 +59,7 @@ mkdir -p .repo/local_manifests
 rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" .repo/local_manifests/
 
 # Sync work dir
-repo sync -j${NUM_OF_THREADS}
+repo sync -f --force-sync -j${NUM_OF_THREADS}
 
 # Clean out any changes
 repo forall -c 'git reset -q --hard ; git clean -q -fd'
@@ -70,6 +68,37 @@ repo forall -c 'git reset -q --hard ; git clean -q -fd'
 if [ "$USE_CCACHE" = 1 ]; then
   "$SRC_DIR/prebuilts/misc/linux-x86/ccache/ccache" -M $CCACHE_SIZE 2>&1
 fi
+
+# Do the inital fectch of the chromium build
+if [ ! -d "$SRC_DIR/chromium" ]; then
+  mkdir -p "$SRC_DIR/chromium"
+  cd "$SRC_DIR/chromium"
+  fetch --nohooks android --target_os_only=true
+fi
+
+# Sync the chromium build with the latest
+cd "$SRC_DIR/chromium/src"
+git reset -q --hard
+git clean -q -fd
+gclient sync --with_branch_heads -r 66.0.3359.106 --jobs ${NUM_OF_THREADS}
+
+if [ ! -d "$SRC_DIR/chromium/chromium_patches" ]; then
+  git clone https://github.com/CopperheadOS/chromium_patches.git
+else
+  cd "$SRC_DIR/chromium/chromium_patches"
+  git reset --hard
+  git pull
+fi
+
+# Apply the patches
+cd "$SRC_DIR/chromium/src"
+git am ../chromium_patches/*.patch
+
+# Build
+gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "66.0.3359.106" android_default_version_code = "335910652"' out/Default
+ninja -C out/Default/ monochrome_public_apk
+
+cd "$SRC_DIR"
 
 # Select device
 source script/copperhead.sh
