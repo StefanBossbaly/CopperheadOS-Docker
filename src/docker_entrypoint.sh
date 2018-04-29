@@ -73,16 +73,19 @@ fi
 if [ ! -d "$SRC_DIR/chromium" ]; then
   mkdir -p "$SRC_DIR/chromium"
   cd "$SRC_DIR/chromium"
-  yes | fetch --nohooks android --target_os_only=true
+  fetch --nohooks android --target_os_only=true
+  "$SRC_DIR/chromium/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=i386
+  "$SRC_DIR/chromium/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=amd64
 fi
 
 # Sync the chromium build with the latest
 cd "$SRC_DIR/chromium/src"
 git reset -q --hard
 git clean -q -fd
-gclient sync --with_branch_heads -r 66.0.3359.106 --jobs ${NUM_OF_THREADS}
+yes | gclient sync --with_branch_heads -r 66.0.3359.106 --jobs ${NUM_OF_THREADS}
 
 if [ ! -d "$SRC_DIR/chromium/chromium_patches" ]; then
+  cd "$SRC_DIR/chromium"
   git clone https://github.com/CopperheadOS/chromium_patches.git
 else
   cd "$SRC_DIR/chromium/chromium_patches"
@@ -95,7 +98,7 @@ cd "$SRC_DIR/chromium/src"
 git am ../chromium_patches/*.patch
 
 # Build
-gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "66.0.3359.106" android_default_version_code = "335910652"' out/Default
+gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "66.0.3359.106" android_default_version_code = "335910652" cc_wrapper="/srv/src/prebuilts/misc/linux-x86/ccache/ccache"' out/Default
 ninja -C out/Default/ monochrome_public_apk
 
 cd "$SRC_DIR"
