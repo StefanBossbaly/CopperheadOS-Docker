@@ -97,8 +97,8 @@ cd "$CHROMIUM_DIR/src"
 git am ../chromium_patches/*.patch
 
 # Build
-gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "66.0.3359.106" android_default_version_code = "335910652" cc_wrapper="/srv/src/prebuilts/misc/linux-x86/ccache/ccache"' out/ninja
-Default -C out/Default/ monochrome_public_apk
+gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "66.0.3359.106" android_default_version_code = "335910652" cc_wrapper="/srv/src/prebuilts/misc/linux-x86/ccache/ccache"' out/Default
+ninja -C out/Default/ monochrome_public_apk
 
 cp -f "$CHROMIUM_DIR/src/out/Default/apks/MonochromePublic.apk" "$SRC_DIR/external/chromium/prebuilt/arm64/MonochromePublic.apk"
 
