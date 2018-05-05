@@ -5,6 +5,7 @@ MAINTAINER Stefan Bossbaly <sbossb@gmail.com>
 # Volumes
 ########################################################
 ENV SRC_DIR /srv/src
+ENV CHROMIUM_DIR /srv/chromium
 ENV CCACHE_DIR /srv/ccache
 ENV TMP_DIR /srv/tmp
 ENV KEYS_DIR /srv/keys
@@ -56,6 +57,7 @@ ENV NUM_OF_THREADS 8
 # Create Volume entry points
 ########################################################
 VOLUME $SRC_DIR
+VOLUME $CHROMIUM_DIR
 VOLUME $CCACHE_DIR
 VOLUME $TMP_DIR
 VOLUME $KEYS_DIR
@@ -71,6 +73,7 @@ COPY src/ /root/
 # Create missing directories
 ########################################################
 RUN mkdir -p $SRC_DIR
+RUN mkdir -p $CHROMIUM_DIR
 RUN mkdir -p $CCACHE_DIR
 RUN mkdir -p $TMP_DIR
 RUN mkdir -p $KEYS_DIR

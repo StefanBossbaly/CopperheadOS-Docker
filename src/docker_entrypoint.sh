@@ -58,11 +58,11 @@ fi
 mkdir -p .repo/local_manifests
 rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" .repo/local_manifests/
 
-# Sync work dir
-repo sync -f --force-sync -j${NUM_OF_THREADS}
-
 # Clean out any changes
 repo forall -c 'git reset -q --hard ; git clean -q -fd'
+
+# Sync work dir
+repo sync --force-sync -j${NUM_OF_THREADS}
 
 # Initialize CCache if it will be used
 if [ "$USE_CCACHE" = 1 ]; then
@@ -70,36 +70,37 @@ if [ "$USE_CCACHE" = 1 ]; then
 fi
 
 # Do the inital fectch of the chromium build
-if [ ! -d "$SRC_DIR/chromium" ]; then
-  mkdir -p "$SRC_DIR/chromium"
-  cd "$SRC_DIR/chromium"
+if [ -z "(ls -A "$CHROMIUM_DIR")" ]; then
+  cd "$CHROMIUM_DIR"
   fetch --nohooks android --target_os_only=true
-  "$SRC_DIR/chromium/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=i386
-  "$SRC_DIR/chromium/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=amd64
+  "$CHROMIUM_DIR/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=i386
+  "$CHROMIUM_DIR/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=amd64
 fi
 
 # Sync the chromium build with the latest
-cd "$SRC_DIR/chromium/src"
+cd "$CHROMIUM_DIR/src"
 git reset -q --hard
 git clean -q -fd
 yes | gclient sync --with_branch_heads -r 66.0.3359.106 --jobs ${NUM_OF_THREADS}
 
-if [ ! -d "$SRC_DIR/chromium/chromium_patches" ]; then
-  cd "$SRC_DIR/chromium"
+if [ ! -d "$CHROMIUM_DIR/chromium_patches" ]; then
+  cd "$CHROMIUM_DIR"
   git clone https://github.com/CopperheadOS/chromium_patches.git
 else
-  cd "$SRC_DIR/chromium/chromium_patches"
+  cd "$CHROMIUM_DIR/chromium_patches"
   git reset --hard
   git pull
 fi
 
 # Apply the patches
-cd "$SRC_DIR/chromium/src"
+cd "$CHROMIUM_DIR/src"
 git am ../chromium_patches/*.patch
 
 # Build
-gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "66.0.3359.106" android_default_version_code = "335910652" cc_wrapper="/srv/src/prebuilts/misc/linux-x86/ccache/ccache"' out/Default
-ninja -C out/Default/ monochrome_public_apk
+gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "66.0.3359.106" android_default_version_code = "335910652" cc_wrapper="/srv/src/prebuilts/misc/linux-x86/ccache/ccache"' out/ninja
+Default -C out/Default/ monochrome_public_apk
+
+cp -f "$CHROMIUM_DIR/src/out/Default/apks/MonochromePublic.apk" "$SRC_DIR/external/chromium/prebuilt/arm64/MonochromePublic.apk"
 
 cd "$SRC_DIR"
 
