@@ -4,17 +4,20 @@ Docker container for building CopperheadOS. Still very much a work in progress
 ## Enviroment Variables
 
 ### `USE_CCACHE`
-Enable or disable using `ccache`. Can significantly speed up later builds. All
-cache files are saved to `CCACHE_DIR`. Defaults to the value of 1.
+Enable or disable using `ccache`. Can significantly speed up later builds for both 
+the CopperheadOS and chromium build processes. All cache files are saved to `CCACHE_DIR`.
+Defaults to the value of 1.
 
 ### `CCACHE_SIZE`
 If `USE_CCACHE` is true this variable determines the size of the ccache.
-Defaults to the value of "50G".
+This value should be a number followed by an optional suffix: "k", "M", "G", "T".
+The default suffix is G. Use 0 for no limit. Defaults to the value of "50G". 
 
 ### `SIGNATURE_SPOOFING`
 If set, privileged apps will be allowed to spoof their signature. This is needed
 for packages like Microg or FakeStore to spoof being Google Play Services or the
-Google Play Store. Defaults to "no".
+Google Play Store. Please note that there is a security risk to setting this to
+"yes". Defaults to "no".
 
 ### `DEVICE`
 The codename of the device the build will be for. Currently supported is all the
@@ -34,14 +37,20 @@ the build. Defaults to 8.
 ## Volumes
 
 ### `/srv/src`
-Location of where all the repositories will be downloaded.
+Location of where all the repositories will be downloaded and built.
+
+### `/srv/chromium`
+Location of where the chromium repositories will be downloaded and built.
+The chromium prebuilt package is no longer provided and we will now have
+to build it from source.
 
 ### `/srv/ccache`
-Location of where the ccache files are saved.
+Location of where the ccache files are saved for both the CopperheadOS build
+and the chromium build.
 
 ### `/srv/keys`
 Location of where the release keys are located. If the directory is empty the
-script will generate keys for you based on the device.
+script will generate keys for you based on the `DEVICE` provided to the container.
 
 ### `/srv/tmp`
 Location of the temporary directory.
@@ -50,8 +59,9 @@ Location of the temporary directory.
 Location of any custom manifests that will be included when syncing repos.
 
 ### `/srv/zips`
-Location of where the output zips and xz files will be copied to after the
-build process is complete.
+Location of where the output `*.zips` and `*.xz` files will be copied to after the
+build process is complete. Will include the target files and packages derived from
+the target files (OTA, Flash Archive).
 
 ## Example Commands
 
@@ -61,6 +71,7 @@ If you want just plain CoppperheadOS just provide the enviroment variables.
 ```
 $ sudo docker run \
     -v /media/hdd/copperheados/src:/srv/src \
+    -v /media/hdd/copperheados/chromium:/srv/chromium \
     -v /media/hdd/copperheados/ccache:/srv/ccache \
     -v /media/hdd/copperheados/keys:/srv/keys \
     -v /media/hdd/copperheados/tmp:/srv/tmp \
@@ -87,6 +98,7 @@ package id installed on the system.
 ```
 $ sudo docker run \
     -v /media/hdd/copperheados/src:/srv/src \
+    -v /media/hdd/copperheados/chromium:/srv/chromium \
     -v /media/hdd/copperheados/ccache:/srv/ccache \
     -v /media/hdd/copperheados/keys:/srv/keys \
     -v /media/hdd/copperheados/tmp:/srv/tmp \
@@ -111,6 +123,7 @@ package.
 ```
 $ sudo docker run \
     -v /media/hdd/copperheados/src:/srv/src \
+    -v /media/hdd/copperheados/chromium:/srv/chromium \
     -v /media/hdd/copperheados/ccache:/srv/ccache \
     -v /media/hdd/copperheados/keys:/srv/keys \
     -v /media/hdd/copperheados/tmp:/srv/tmp \
