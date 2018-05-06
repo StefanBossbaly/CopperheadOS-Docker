@@ -88,7 +88,8 @@ if [[ ! -d $CHROMIUM_DIR/chromium_patches ]]; then
   git clone https://github.com/CopperheadOS/chromium_patches.git
 else
   cd "$CHROMIUM_DIR/chromium_patches"
-  git reset --hard
+  git reset -q --hard
+  git clean -q -fd
   git pull
 fi
 
