@@ -24,7 +24,7 @@ else
 fi
 
 # Check to make sure we have the correct keys
-if [ -z "$(ls -A "$KEYS_DIR")" ]; then
+if [[ -z "$(ls -A $KEYS_DIR)" ]]; then
   echo ">> [$(date)] Generating new keys"
   for c in "${keys[@]}"; do
     echo ">> [$(date)]  Generating $c..."
@@ -64,12 +64,12 @@ repo forall -c 'git reset -q --hard ; git clean -q -fd'
 repo sync --force-sync -j${NUM_OF_THREADS}
 
 # Initialize CCache if it will be used
-if [ "$USE_CCACHE" = 1 ]; then
+if [[ $USE_CCACHE = 1 ]]; then
   "$SRC_DIR/prebuilts/misc/linux-x86/ccache/ccache" -M $CCACHE_SIZE 2>&1
 fi
 
 # Do the inital fetch and setup of the chromium build
-if [ -z "$(ls -A "$CHROMIUM_DIR")" ]; then
+if [[ -z "$(ls -A $CHROMIUM_DIR)" ]]; then
   cd "$CHROMIUM_DIR"
   fetch --nohooks android --target_os_only=true
   "$CHROMIUM_DIR/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=i386
@@ -83,7 +83,7 @@ git clean -q -fd
 yes | gclient sync --with_branch_heads -r 66.0.3359.106 --jobs ${NUM_OF_THREADS}
 
 # Clone or pull latest of the chromium patches
-if [ ! -d "$CHROMIUM_DIR/chromium_patches" ]; then
+if [[ ! -d $CHROMIUM_DIR/chromium_patches ]]; then
   cd "$CHROMIUM_DIR"
   git clone https://github.com/CopperheadOS/chromium_patches.git
 else
@@ -117,9 +117,9 @@ rm -rf "$SRC_DIR/vendor/google_devices/${DEVICE}"
 mv "$SRC_DIR/vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${DEVICE}" "$SRC_DIR/vendor/google_devices"
 
 # The smaller variant of the pixels have to move their bigger brother's folder as well
-if [ "$DEVICE" = "walleye" ] || [ "$DEVICE" = "sailfish" ]; then
+if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "sailfish" ]]; then
   big_brother=""
-  if [ "$DEVICE" = "walleye" ]; then
+  if [[ $DEVICE = "walleye" ]]; then
     big_brother="muskie"
   else
     big_brother="marlin"
@@ -130,16 +130,15 @@ if [ "$DEVICE" = "walleye" ] || [ "$DEVICE" = "sailfish" ]; then
 fi
 
 # If needed, apply the microG's signature spoofing patch
-if [ "$SIGNATURE_SPOOFING" = "yes" ]; then
+if [[ $SIGNATURE_SPOOFING = "yes" ]]; then
   cd "$SRC_DIR/frameworks/base"
-  patch_name="android_frameworks_base-O.patch"
   echo ">> [$(date)] Applying the restricted signature spoofing patch (based on $patch_name) to frameworks/base"
-  sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/${patch_name}" | patch --quiet -p1
+  sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/android_frameworks_base-O.patch" | patch --quiet -p1
   git clean -q -f
 fi
 
 # Add custom packages to be installed
-if ! [ -z "$CUSTOM_PACKAGES" ]; then
+if [[ ! -z $CUSTOM_PACKAGES ]]; then
   echo ">> [$(date)] Adding custom packages ($CUSTOM_PACKAGES)"
   sed -i "1s;^;PRODUCT_PACKAGES += $CUSTOM_PACKAGES\n\n;" "$SRC_DIR/build/target/product/core.mk"
 fi
