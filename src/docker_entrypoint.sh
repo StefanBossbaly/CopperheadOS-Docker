@@ -33,7 +33,7 @@ if [[ -z "$(ls -A $KEYS_DIR)" ]]; then
 else
   for c in "${keys[@]}"; do
     for e in pk8 x509.pem; do
-      if [ ! -f "$KEYS_DIR/$c.$e" ]; then
+      if [[ ! -f $KEYS_DIR/$c.$e ]]; then
         echo ">> [$(date)] \"\$KEYS_DIR/$c.$e\" is missing"
         exit 1
       fi
@@ -43,12 +43,12 @@ fi
 
 # Generate avb.pem and avb_pkmd.bin for walleye and taimen
 if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
-  if [ ! -f "$KEYS_DIR/avb.pem" ]; then
+  if [[ ! -f $KEYS_DIR/avb.pem ]]; then
     echo ">> [$(date)]  Generating avb.pem..."
     openssl genrsa -out "$KEYS_DIR/avb.pem" 2048
   fi
 
-  if [ ! -f "$KEYS_DIR/avb_pkmd.bin" ]; then
+  if [[ ! -f $KEYS_DIR/avb_pkmd.bin ]]; then
     "$SRC_DIR/external/avb/avbtool" extract_public_key --key "$KEYS_DIR/avb.pem" --output "$KEYS_DIR/avb_pkmd.bin"
   fi
 fi
