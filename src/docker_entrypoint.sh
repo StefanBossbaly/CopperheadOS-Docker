@@ -54,8 +54,8 @@ if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
 fi
 
 # Copy over the local_manifests
-mkdir -p .repo/local_manifests
-rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" .repo/local_manifests/
+mkdir -p "$SRC_DIR/.repo/local_manifests"
+rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" "$SRC_DIR/.repo/local_manifests/"
 
 # Clean out any changes
 repo forall -c 'git reset -q --hard ; git clean -q -fd'
@@ -80,7 +80,7 @@ fi
 cd "$CHROMIUM_DIR/src"
 git reset -q --hard
 git clean -q -fd
-yes | gclient sync --with_branch_heads -r 66.0.3359.106 --jobs ${NUM_OF_THREADS}
+yes | gclient sync --with_branch_heads -r ${CHROMIUM_RELEASE_NAME} --jobs ${NUM_OF_THREADS}
 
 # Clone or pull latest of the chromium patches
 if [[ ! -d $CHROMIUM_DIR/chromium_patches ]]; then
@@ -95,16 +95,16 @@ fi
 
 # Apply the patches
 cd "$CHROMIUM_DIR/src"
-git am ../chromium_patches/*.patch
+git am "$CHROMIUM_DIR/chromium_patches/*.patch"
 
 # Generate build args and build chromium apk
 cd "$CHROMIUM_DIR/src"
 if [[ $USE_CCACHE = 1 ]]; then
-  cc_wrapper_arg=(cc_wrapper = "/srv/src/prebuilts/misc/linux-x86/ccache/ccache")
+  cc_wrapper_arg='cc_wrapper = "/srv/src/prebuilts/misc/linux-x86/ccache/ccache"'
 else
   cc_wrapper_arg=""
 fi
-gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "66.0.3359.106" android_default_version_code = "335910652"' ${cc_wrapper_arg} out/Default
+gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "'${CHROMIUM_RELEASE_NAME}'" android_default_version_code = "'${CHROMIUM_RELEASE_CODE}'" '"${cc_wrapper_arg}" out/Default
 ninja -C out/Default/ monochrome_public_apk
 
 # Copy the apk over to the prebuilts

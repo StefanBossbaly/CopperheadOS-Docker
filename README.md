@@ -30,6 +30,14 @@ Defaults to "OPM2.171019.029.2018.04.02.21".
 ### `BUILD_ID`
 The Build ID of the build. Defaults to "OPM2.171019.029".
 
+### `CHROMIUM_RELEASE_NAME`
+The Chromium release name that is going to be built and included in the CopperheadOS
+build. Defaults to "66.0.3359.106".
+
+### `CHROMIUM_RELEASE_CODE`
+The Chromium release code that is going to be built and included in the CopperheadOS
+build. Defaults to "335910652".
+
 ### `NUM_OF_THREADS`
 The number of threads/processes that will be used during the various stages of
 the build. Defaults to 8.
