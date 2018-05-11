@@ -16,6 +16,16 @@ git config --global color.ui false
 cd "$SRC_DIR"
 repo init -u https://github.com/CopperheadOS/platform_manifest.git -b refs/tags/${BUILD_TAG}
 
+# Copy over the local_manifests
+mkdir -p "$SRC_DIR/.repo/local_manifests"
+rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" "$SRC_DIR/.repo/local_manifests/"
+
+# Clean out any changes
+repo forall -c 'git reset -q --hard ; git clean -q -fd'
+
+# Sync work dir
+repo sync --force-sync -j${NUM_OF_THREADS}
+
 # Ensure we have the correct keys
 if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
   keys=(releasekey platform shared media)
@@ -52,16 +62,6 @@ if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
     "$SRC_DIR/external/avb/avbtool" extract_public_key --key "$KEYS_DIR/avb.pem" --output "$KEYS_DIR/avb_pkmd.bin"
   fi
 fi
-
-# Copy over the local_manifests
-mkdir -p "$SRC_DIR/.repo/local_manifests"
-rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" "$SRC_DIR/.repo/local_manifests/"
-
-# Clean out any changes
-repo forall -c 'git reset -q --hard ; git clean -q -fd'
-
-# Sync work dir
-repo sync --force-sync -j${NUM_OF_THREADS}
 
 # Initialize CCache if it will be used
 if [[ $USE_CCACHE = 1 ]]; then
