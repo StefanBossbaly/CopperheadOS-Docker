@@ -19,6 +19,10 @@ for packages like Microg or FakeStore to spoof being Google Play Services or the
 Google Play Store. Please note that there is a security risk to setting this to
 "yes". Defaults to "no".
 
+### `OPEN_GAPPS`
+If set, the `PICO` [package](https://github.com/opengapps/opengapps/wiki/Package-Comparison) will be included in the system image.
+Defaults to "no".
+
 ### `DEVICE`
 The codename of the device the build will be for. Currently supported is all the
 Google Pixel devices (sailfish, marlin, walleye, taimen). Defaults to "walleye".
@@ -85,16 +89,16 @@ $ sudo docker run \
     -v /media/hdd/copperheados/tmp:/srv/tmp \
     -v /media/hdd/copperheados/zips:/srv/zips \
     -e USE_CCACHE=1 \
-    -e CCACHE_SIZE="50G" \
+    -e CCACHE_SIZE="70G" \
     -e SIGNATURE_SPOOFING="no" \
     -e DEVICE="walleye" \
-    -e BUILD_TAG="OPM2.171019.029.2018.04.02.21" \
-    -e BUILD_ID="OPM2.171019.029" \
+    -e BUILD_TAG="OPM2.171019.029.B1.2018.05.08.01" \
+    -e BUILD_ID="OPM2.171019.029.B1" \
     -e NUM_OF_THREADS=8 \
     bflux/copperheados-docker
 ```
 
-### Microg
+### CopperheadOS with Microg
 [Microg](https://microg.org/) is a FOSS implementation of most of the Google
 Play Services Libraries. Most importantly it supports GCM and Account
 Authentication. Inorder to support microg `SIGNATURE_SPOOFING` patch must be
@@ -110,23 +114,23 @@ $ sudo docker run \
     -v /media/hdd/copperheados/ccache:/srv/ccache \
     -v /media/hdd/copperheados/keys:/srv/keys \
     -v /media/hdd/copperheados/tmp:/srv/tmp \
-    -v /media/hdd/CopperheadOS-Docker/local_manifest/:/srv/local_manifests \
+    -v /media/hdd/CopperheadOS-Docker/local_manifest/prebuilt:/srv/local_manifests \
     -v /media/hdd/copperheados/zips:/srv/zips \
     -e USE_CCACHE=1 \
-    -e CCACHE_SIZE="50G" \
+    -e CCACHE_SIZE="70G" \
     -e SIGNATURE_SPOOFING="yes" \
     -e DEVICE="walleye" \
-    -e BUILD_TAG="OPM2.171019.029.2018.04.02.21" \
-    -e BUILD_ID="OPM2.171019.029" \
+    -e BUILD_TAG="OPM2.171019.029.B1.2018.05.08.01" \
+    -e BUILD_ID="OPM2.171019.029.B1" \
     -e NUM_OF_THREADS=8 \
     -e CUSTOM_PACKAGES="GmsCore GsfProxy MozillaNlpBackend NominatimNlpBackend com.google.android.maps FakeStore" \
     bflux/copperheados-docker
 ```
 
-### Microg with Google Play Store
+### CopperheadOS with Google Play Services
 If you are a complete newb like I am and aren't ready to give up the Google Play
-Store quite yet then simply swap out the `FakeStore` package for the `Phonesky`
-package.
+Store and Google Play Services, then simply mount the `local_manifest/opengapps` folder
+as the `/srv/local_manifests` volume and set the `OPEN_GAPPS` variable to `yes`.
 
 ```
 $ sudo docker run \
@@ -135,15 +139,15 @@ $ sudo docker run \
     -v /media/hdd/copperheados/ccache:/srv/ccache \
     -v /media/hdd/copperheados/keys:/srv/keys \
     -v /media/hdd/copperheados/tmp:/srv/tmp \
-    -v /media/hdd/CopperheadOS-Docker/local_manifest/:/srv/local_manifests \
+    -v /media/hdd/CopperheadOS-Docker/local_manifest/opengapps:/srv/local_manifests \
     -v /media/hdd/copperheados/zips:/srv/zips \
     -e USE_CCACHE=1 \
-    -e CCACHE_SIZE="50G" \
-    -e SIGNATURE_SPOOFING="yes" \
+    -e CCACHE_SIZE="70G" \
+    -e SIGNATURE_SPOOFING="no" \
+    -e OPEN_GAPPS="yes" \
     -e DEVICE="walleye" \
-    -e BUILD_TAG="OPM2.171019.029.2018.04.02.21" \
-    -e BUILD_ID="OPM2.171019.029" \
+    -e BUILD_TAG="OPM2.171019.029.B1.2018.05.08.01" \
+    -e BUILD_ID="OPM2.171019.029.B1" \
     -e NUM_OF_THREADS=8 \
-    -e CUSTOM_PACKAGES="GmsCore GsfProxy MozillaNlpBackend NominatimNlpBackend com.google.android.maps Phonesky" \
     bflux/copperheados-docker
 ```
