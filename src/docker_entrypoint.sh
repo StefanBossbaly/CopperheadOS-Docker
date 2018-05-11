@@ -95,7 +95,7 @@ fi
 
 # Apply the patches
 cd "$CHROMIUM_DIR/src"
-git am "$CHROMIUM_DIR/chromium_patches/*.patch"
+git am "$CHROMIUM_DIR"/chromium_patches/*.patch
 
 # Generate build args and build chromium apk
 cd "$CHROMIUM_DIR/src"
