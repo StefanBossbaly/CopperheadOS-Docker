@@ -7,6 +7,14 @@ if [[ $DEVICE != "sailfish" ]] && [[ $DEVICE != "marlin" ]] && [[ $DEVICE != "wa
   exit 1
 fi
 
+# Setup global variables
+BIG_BROTHER=""
+if [[ $DEVICE = "walleye" ]]; then
+  BIG_BROTHER="muskie"
+elif [[ $DEVICE = "sailfish" ]]; then
+  BIG_BROTHER="marlin"
+fi
+
 # Initialize Git user information
 git config --global user.name $USER_NAME
 git config --global user.email $USER_MAIL
@@ -123,20 +131,14 @@ rm -rf "$SRC_DIR/vendor/google_devices/${DEVICE}"
 mv "$SRC_DIR/vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${DEVICE}" "$SRC_DIR/vendor/google_devices"
 
 # The smaller variant of the pixels have to move their bigger brother's folder as well
-if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "sailfish" ]]; then
-  big_brother=""
-  if [[ $DEVICE = "walleye" ]]; then
-    big_brother="muskie"
-  else
-    big_brother="marlin"
-  fi
-
-  rm -fr "$SRC_DIR/vendor/google_devices/${big_brother}"
-  mv "$SRC_DIR/vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${big_brother}" "$SRC_DIR/vendor/google_devices"
+if [[ ! -z $BIG_BROTHER ]]; then
+  rm -fr "$SRC_DIR/vendor/google_devices/${BIG_BROTHER}"
+  mv "$SRC_DIR/vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${BIG_BROTHER}" "$SRC_DIR/vendor/google_devices"
 fi
 
 # OPEN_GAPPS takes priority
 if [[ $OPEN_GAPPS = "yes" ]]; then
+  # Special case for walleye (also known as wahoo)
   dev_name="$DEVICE"
   if [[ $DEVICE = "walleye" ]]; then
     dev_name="wahoo"
@@ -147,18 +149,17 @@ if [[ $OPEN_GAPPS = "yes" ]]; then
   echo '$(call inherit-product, vendor/opengapps/build/opengapps-packages.mk)' >> "$SRC_DIR/device/google/$dev_name/device.mk"
 
   # PRODUCT_RESTRICT_VENDOR_FILES needs to be false
-  big_brother=$DEVICE
-  if [[ $DEVICE = "walleye" ]]; then
-    big_brother="muskie"
-  elif [[ $DEVICE = "sailfish" ]]; then
-    big_brother="marlin"
+  if [[ ! -z $BIG_BROTHER ]]; then
+    dev_mk_name=$BIG_BROTHER
+  else
+    dev_mk_name=$DEVICE
   fi
-  sed -i 's/PRODUCT_RESTRICT_VENDOR_FILES.*/PRODUCT_RESTRICT_VENDOR_FILES := false/' "$SRC_DIR/device/google/$big_brother/aosp_$DEVICE.mk"
+  sed -i 's/PRODUCT_RESTRICT_VENDOR_FILES.*/PRODUCT_RESTRICT_VENDOR_FILES := false/' "$SRC_DIR/device/google/$dev_mk_name/aosp_${DEVICE}.mk"
 else
   # If needed, apply the microG's signature spoofing patch
   if [[ $SIGNATURE_SPOOFING = "yes" ]]; then
     cd "$SRC_DIR/frameworks/base"
-    echo ">> [$(date)] Applying the restricted signature spoofing patch (based on $patch_name) to frameworks/base"
+    echo ">> [$(date)] Applying the restricted signature spoofing patch to frameworks/base"
     sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/android_frameworks_base-O.patch" | patch --quiet -p1
     git clean -q -f
   fi
