@@ -139,6 +139,11 @@ if [[ ! -z $BIG_BROTHER ]]; then
   mv "$SRC_DIR/vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${BIG_BROTHER}" "$SRC_DIR/vendor/google_devices"
 fi
 
+# TODO find a better way to get rid of the double talkback dep
+if [[ -f $SRC_DIR/vendor/opengapps/build/modules/talkback/Android.mk ]]; then
+  rm -f "$SRC_DIR/vendor/opengapps/build/modules/talkback/Android.mk"
+fi
+
 # OPEN_GAPPS takes priority
 if [[ $OPEN_GAPPS = "yes" ]]; then
   # Special case for walleye (also known as wahoo)
