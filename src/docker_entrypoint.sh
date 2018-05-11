@@ -135,17 +135,14 @@ if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "sailfish" ]]; then
   mv "$SRC_DIR/vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${big_brother}" "$SRC_DIR/vendor/google_devices"
 fi
 
-# TODO workaround since build doesn't like package ids
-rm -fr
-rm -fr
-
+# OPEN_GAPPS takes priority
 if [[ $OPEN_GAPPS = "yes" ]]; then
   dev_name="$DEVICE"
   if [[ $DEVICE = "walleye" ]]; then
     dev_name="wahoo"
   fi
 
-  # Add GAPPS_VARIANT += pico hook at beginning and vendor/opengapps/build/opengapps-packages.mk hook at the end 
+  # Add GAPPS_VARIANT += pico and call to vendor/opengapps/build/opengapps-packages.mk hook at the end 
   sed -i "1s;^;GAPPS_VARIANT += pico\n\n;" "$SRC_DIR/device/google/$dev_name/device.mk"
   echo '$(call inherit-product, vendor/opengapps/build/opengapps-packages.mk)' >> "$SRC_DIR/device/google/$dev_name/device.mk"
 
@@ -189,7 +186,8 @@ ln -sf "$KEYS_DIR" "$SRC_DIR/keys/${DEVICE}"
 # Generate release files from target files
 script/release.sh ${DEVICE}
 
-# Move zip files to ZIP_DIR
+# Move archives files to ZIP_DIR
 cd "$SRC_DIR/out/release-${DEVICE}-${BUILD_NUMBER}"
 cp -f *.zip "$ZIP_DIR"
 cp -f *.tar.xz "$ZIP_DIR"
+cp -f "$CHROMIUM_DIR/src/out/Default/apks/MonochromePublic.apk" "$ZIP_DIR/MonochromePublic_${CHROMIUM_RELEASE_NAME}.apk"
