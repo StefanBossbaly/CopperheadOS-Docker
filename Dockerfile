@@ -45,6 +45,10 @@ ENV USER_MAIL "copperheados-buildbot@docker.host"
 # example.
 ENV SIGNATURE_SPOOFING "no"
 
+# Installs the PICO variant of OpenGAPPS
+# Valid values are "no", "yes"
+ENV OPEN_GAPPS "no"
+
 ########################################################
 # Build Variables
 ########################################################
@@ -92,7 +96,7 @@ RUN apt-get install -y bc bison build-essential ccache cron curl flex \
       lib32readline-dev lib32z1-dev libesd0-dev liblz4-tool libncurses5-dev \
       libsdl1.2-dev libssl-dev libwxgtk3.0-dev libxml2 libxml2-utils lsof lzop \
       maven openjdk-8-jdk pngcrush procps python rsync schedtool \
-      squashfs-tools wget xdelta3 xsltproc yasm zip zlib1g-dev cgpt bsdmainutils
+      squashfs-tools wget xdelta3 xsltproc yasm zip zlib1g-dev cgpt bsdmainutils lzip
 
 ########################################################
 # Install Google Tools

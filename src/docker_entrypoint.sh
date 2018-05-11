@@ -135,18 +135,42 @@ if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "sailfish" ]]; then
   mv "$SRC_DIR/vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${big_brother}" "$SRC_DIR/vendor/google_devices"
 fi
 
-# If needed, apply the microG's signature spoofing patch
-if [[ $SIGNATURE_SPOOFING = "yes" ]]; then
-  cd "$SRC_DIR/frameworks/base"
-  echo ">> [$(date)] Applying the restricted signature spoofing patch (based on $patch_name) to frameworks/base"
-  sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/android_frameworks_base-O.patch" | patch --quiet -p1
-  git clean -q -f
-fi
+# TODO workaround since build doesn't like package ids
+rm -fr
+rm -fr
 
-# Add custom packages to be installed
-if [[ ! -z $CUSTOM_PACKAGES ]]; then
-  echo ">> [$(date)] Adding custom packages ($CUSTOM_PACKAGES)"
-  sed -i "1s;^;PRODUCT_PACKAGES += $CUSTOM_PACKAGES\n\n;" "$SRC_DIR/build/target/product/core.mk"
+if [[ $OPEN_GAPPS = "yes" ]]; then
+  dev_name="$DEVICE"
+  if [[ $DEVICE = "walleye" ]]; then
+    dev_name="wahoo"
+  fi
+
+  # Add GAPPS_VARIANT += pico hook at beginning and vendor/opengapps/build/opengapps-packages.mk hook at the end 
+  sed -i "1s;^;GAPPS_VARIANT += pico\n\n;" "$SRC_DIR/device/google/$dev_name/device.mk"
+  echo '$(call inherit-product, vendor/opengapps/build/opengapps-packages.mk)' >> "$SRC_DIR/device/google/$dev_name/device.mk"
+
+  # PRODUCT_RESTRICT_VENDOR_FILES needs to be false
+  big_brother=$DEVICE
+  if [[ $DEVICE = "walleye" ]]; then
+    big_brother="muskie"
+  elif [[ $DEVICE = "sailfish" ]]; then
+    big_brother="marlin"
+  fi
+  sed -i 's/PRODUCT_RESTRICT_VENDOR_FILES.*/PRODUCT_RESTRICT_VENDOR_FILES := false/' "$SRC_DIR/device/google/$big_brother/aosp_$DEVICE.mk"
+else
+  # If needed, apply the microG's signature spoofing patch
+  if [[ $SIGNATURE_SPOOFING = "yes" ]]; then
+    cd "$SRC_DIR/frameworks/base"
+    echo ">> [$(date)] Applying the restricted signature spoofing patch (based on $patch_name) to frameworks/base"
+    sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/android_frameworks_base-O.patch" | patch --quiet -p1
+    git clean -q -f
+  fi
+
+  # Add custom packages to be installed
+  if [[ ! -z $CUSTOM_PACKAGES ]]; then
+    echo ">> [$(date)] Adding custom packages ($CUSTOM_PACKAGES)"
+    sed -i "1s;^;PRODUCT_PACKAGES += $CUSTOM_PACKAGES\n\n;" "$SRC_DIR/build/target/product/core.mk"
+  fi
 fi
 
 # Apply FDroid patch
