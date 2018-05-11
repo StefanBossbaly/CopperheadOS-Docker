@@ -34,6 +34,9 @@ repo forall -c 'git reset -q --hard ; git clean -q -fd'
 # Sync work dir
 repo sync --force-sync -j${NUM_OF_THREADS}
 
+# Verify tags
+repo forall -c 'git verify-tag --raw $(git describe)' || { echo ">> [$(date)] Tags could not be verified"; exit 1; }
+
 # Ensure we have the correct keys
 if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
   keys=(releasekey platform shared media)
@@ -160,7 +163,7 @@ else
   if [[ $SIGNATURE_SPOOFING = "yes" ]]; then
     cd "$SRC_DIR/frameworks/base"
     echo ">> [$(date)] Applying the restricted signature spoofing patch to frameworks/base"
-    sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/android_frameworks_base-O.patch" | patch --quiet -p1
+    sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/patches/android_frameworks_base-O.patch" | patch --quiet -p1
     git clean -q -f
   fi
 
