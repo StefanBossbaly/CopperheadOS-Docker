@@ -99,10 +99,11 @@ RUN apt-get install -y bc bison build-essential ccache cron curl flex \
       squashfs-tools wget xdelta3 xsltproc yasm zip zlib1g-dev cgpt bsdmainutils lzip
 
 ########################################################
-# Add Public Keys
+# Add PGP Keys
 ########################################################
 RUN gpg --import "/root/gpgkeys/9AB10E784340D13570EF945E83810964E8AD3F819AB10E78.gpg"
 RUN gpg --import "/root/gpgkeys/9AF5F22A65EEFE022108E2B708CBFCF7F9E712E59AF5F22A.gpg"
+RUN gpg --import "/root/gpgkeys/47A0B99EE6E0512B1829A92528CAFB50B60ABDD447A0B99E.gpg"
 
 ########################################################
 # Install Google Tools
