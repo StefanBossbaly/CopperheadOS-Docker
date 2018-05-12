@@ -1,4 +1,4 @@
 <manifest>
-  <remote name="github_base" fetch="https://github.com/" />
-  <project path="packages/apps" name="StefanBossbaly/android_prebuilts_prebuiltapks" remote="github_base" revision="master" />
+  <remote name="stefan" fetch="https://github.com/StefanBossbaly" />
+  <project path="packages/apps" name="android_prebuilts_prebuiltapks" remote="stefan" revision="v0.1" />
 </manifest>

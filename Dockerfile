@@ -104,6 +104,7 @@ RUN apt-get install -y bc bison build-essential ccache cron curl flex \
 RUN gpg --import "/root/gpgkeys/9AB10E784340D13570EF945E83810964E8AD3F819AB10E78.gpg"
 RUN gpg --import "/root/gpgkeys/9AF5F22A65EEFE022108E2B708CBFCF7F9E712E59AF5F22A.gpg"
 RUN gpg --import "/root/gpgkeys/47A0B99EE6E0512B1829A92528CAFB50B60ABDD447A0B99E.gpg"
+RUN gpg --import "/root/gpgkeys/E09EE26BC29C13C520C097E827C85CFCFAD4F2B8E09EE26B.gpg"
 
 ########################################################
 # Install Google Tools
