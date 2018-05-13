@@ -1,5 +1,5 @@
-set -e
 #!/bin/bash
+set -e
 
 # We only support the pixel devices
 if [[ $DEVICE != "sailfish" ]] && [[ $DEVICE != "marlin" ]] && [[ $DEVICE != "walleye" ]] && [[ $DEVICE != "taimen" ]]; then
