@@ -1,3 +1,4 @@
+set -e
 #!/bin/bash
 
 # We only support the pixel devices
@@ -28,12 +29,14 @@ mkdir -p "$SRC_DIR/.repo/local_manifests"
 rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" "$SRC_DIR/.repo/local_manifests/"
 
 # Clean out any changes
+echo ">> [$(date)] Reseting repos"
 repo forall -c 'git reset -q --hard ; git clean -q -fd'
 
 # Sync work dir
 repo sync --force-sync -j${NUM_OF_THREADS}
 
-# Verify tags
+# Verify signatures for all repo tags
+echo ">> [$(date)] Verifying tag signatures for all repositories"
 repo forall -c 'git verify-tag --raw $(git describe)' || { echo ">> [$(date)] Tags could not be verified"; exit 1; }
 
 # Ensure we have the correct keys
@@ -48,7 +51,7 @@ if [[ -z "$(ls -A $KEYS_DIR)" ]]; then
   echo ">> [$(date)] Generating new keys"
   for c in "${keys[@]}"; do
     echo ">> [$(date)]  Generating $c..."
-    "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< '' &> /dev/null
+    "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< '' &> /dev/null || true
   done
 else
   echo ">> [$(date)] Ensuring all keys are in $KEYS_DIR"
@@ -94,8 +97,7 @@ fi
 
 # Sync the chromium build with the latest
 cd "$CHROMIUM_DIR/src"
-git reset -q --hard
-git clean -q -fd
+yes | gclient revert --jobs ${NUM_OF_THREADS}
 yes | gclient sync --with_branch_heads -r ${CHROMIUM_RELEASE_NAME} --jobs ${NUM_OF_THREADS}
 
 # Clone or pull latest of the chromium patches
@@ -110,10 +112,12 @@ else
 fi
 
 # Apply the patches
+echo ">> [$(date)] Applying chromium patches"
 cd "$CHROMIUM_DIR/src"
 git am "$CHROMIUM_DIR"/chromium_patches/*.patch
 
 # Generate build args and build chromium apk
+echo ">> [$(date)] Building chromium apk"
 cd "$CHROMIUM_DIR/src"
 if [[ $USE_CCACHE = 1 ]]; then
   cc_wrapper_arg='cc_wrapper = "/srv/src/prebuilts/misc/linux-x86/ccache/ccache"'
@@ -132,6 +136,7 @@ source script/copperhead.sh
 choosecombo release aosp_${DEVICE} user
 
 # Download and move the vendor specific folder
+echo ">> [$(date)] Downloading vendor specific files"
 cd "$SRC_DIR"
 "$SRC_DIR/vendor/android-prepare-vendor/execute-all.sh" -d ${DEVICE} -b ${BUILD_ID} -o "$SRC_DIR/vendor/android-prepare-vendor"
 mkdir -p "$SRC_DIR/vendor/google_devices"
