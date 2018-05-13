@@ -49,17 +49,19 @@ if [[ -z "$(ls -A $KEYS_DIR)" ]]; then
   echo ">> [$(date)] Generating new keys"
   for c in "${keys[@]}"; do
     echo ">> [$(date)]  Generating $c..."
-    "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< '' &> /dev/null
+    "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< ''
   done
 else
+  echo ">> [$(date)] Ensuring all keys are in $KEYS_DIR"
   for c in "${keys[@]}"; do
     for e in pk8 x509.pem; do
       if [[ ! -f $KEYS_DIR/$c.$e ]]; then
-        echo ">> [$(date)] \"\$KEYS_DIR/$c.$e\" is missing"
+        echo ">> [$(date)] $KEYS_DIR/$c.$e is missing"
         exit 1
       fi
     done
   done
+  echo ">> [$(date)] Keys verified"
 fi
 
 # Generate avb.pem and avb_pkmd.bin for walleye and taimen
@@ -72,6 +74,10 @@ if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
   if [[ ! -f $KEYS_DIR/avb_pkmd.bin ]]; then
     "$SRC_DIR/external/avb/avbtool" extract_public_key --key "$KEYS_DIR/avb.pem" --output "$KEYS_DIR/avb_pkmd.bin"
   fi
+elif [[ $DEVICE = "sailfish" ]] || [[ $DEVICE = "marlin" ]]; then
+  make -j${NUM_OF_THREADS} generate_verity_key
+  "$SRC_DIR/out/host/linux-x86/bin/generate_verity_key" -convert "$KEYS_DIR/verity.x509.pem" "$KEYS_DIR/verity_key"
+  openssl x509 -outform der -in "$KEYS_DIR/verity.x509.pem" -out "$SRC_DIR/kernel/google/marlin/verity_user.der.x509"
 fi
 
 # Initialize CCache if it will be used
