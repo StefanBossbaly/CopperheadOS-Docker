@@ -1,5 +1,4 @@
 #!/bin/bash
-set -e
 
 # We only support the pixel devices
 if [[ $DEVICE != "sailfish" ]] && [[ $DEVICE != "marlin" ]] && [[ $DEVICE != "walleye" ]] && [[ $DEVICE != "taimen" ]]; then
@@ -49,7 +48,7 @@ if [[ -z "$(ls -A $KEYS_DIR)" ]]; then
   echo ">> [$(date)] Generating new keys"
   for c in "${keys[@]}"; do
     echo ">> [$(date)]  Generating $c..."
-    "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< ''
+    "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< '' &> /dev/null
   done
 else
   echo ">> [$(date)] Ensuring all keys are in $KEYS_DIR"
