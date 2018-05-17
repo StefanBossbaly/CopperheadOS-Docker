@@ -29,18 +29,18 @@ Google Pixel devices (sailfish, marlin, walleye, taimen). Defaults to "walleye".
 
 ### `BUILD_TAG`
 The release version of [CopperheadOS](https://github.com/CopperheadOS/android-prepare-vendor/releases).
-Defaults to "OPM2.171019.029.2018.04.02.21".
+Defaults to "OPM2.171019.029.B1.2018.05.15.17".
 
 ### `BUILD_ID`
-The Build ID of the build. Defaults to "OPM2.171019.029".
+The Build ID of the build. Defaults to "OPM2.171019.029.B1".
 
 ### `CHROMIUM_RELEASE_NAME`
 The Chromium release name that is going to be built and included in the CopperheadOS
-build. Defaults to "66.0.3359.106".
+build. Defaults to "66.0.3359.158".
 
 ### `CHROMIUM_RELEASE_CODE`
 The Chromium release code that is going to be built and included in the CopperheadOS
-build. Defaults to "335910652".
+build. Defaults to "335915852".
 
 ### `NUM_OF_THREADS`
 The number of threads/processes that will be used during the various stages of
@@ -92,7 +92,7 @@ $ sudo docker run \
     -e CCACHE_SIZE="70G" \
     -e SIGNATURE_SPOOFING="no" \
     -e DEVICE="walleye" \
-    -e BUILD_TAG="OPM2.171019.029.B1.2018.05.08.01" \
+    -e BUILD_TAG="OPM2.171019.029.B1.2018.05.15.17" \
     -e BUILD_ID="OPM2.171019.029.B1" \
     -e NUM_OF_THREADS=8 \
     bflux/copperheados-docker
@@ -120,7 +120,7 @@ $ sudo docker run \
     -e CCACHE_SIZE="70G" \
     -e SIGNATURE_SPOOFING="yes" \
     -e DEVICE="walleye" \
-    -e BUILD_TAG="OPM2.171019.029.B1.2018.05.08.01" \
+    -e BUILD_TAG="OPM2.171019.029.B1.2018.05.15.17" \
     -e BUILD_ID="OPM2.171019.029.B1" \
     -e NUM_OF_THREADS=8 \
     -e CUSTOM_PACKAGES="GmsCore GsfProxy MozillaNlpBackend NominatimNlpBackend com.google.android.maps FakeStore" \
@@ -146,7 +146,7 @@ $ sudo docker run \
     -e SIGNATURE_SPOOFING="no" \
     -e OPEN_GAPPS="yes" \
     -e DEVICE="walleye" \
-    -e BUILD_TAG="OPM2.171019.029.B1.2018.05.08.01" \
+    -e BUILD_TAG="OPM2.171019.029.B1.2018.05.15.17" \
     -e BUILD_ID="OPM2.171019.029.B1" \
     -e NUM_OF_THREADS=8 \
     bflux/copperheados-docker
