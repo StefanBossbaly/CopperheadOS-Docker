@@ -88,16 +88,16 @@ fi
 
 # Initialize CCache if it will be used
 if [[ $USE_CCACHE = 1 ]]; then
-  "$SRC_DIR/prebuilts/misc/linux-x86/ccache/ccache" -M $CCACHE_SIZE 2>&1
+  "$SRC_DIR/prebuilts/misc/linux-x86/ccache/ccache" -M $CCACHE_SIZE > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 fi
 
 # Do the inital fetch and setup of the chromium build
 if [[ -z "$(ls -A $CHROMIUM_DIR)" ]]; then
   echo ">> [$(date)] Doing inital fetch of the chromium project" | tee -a "$STDOUT_LOG"
   cd "$CHROMIUM_DIR"
-  fetch --nohooks android --target_os_only=true
-  "$CHROMIUM_DIR/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=i386
-  "$CHROMIUM_DIR/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=amd64
+  fetch --nohooks android --target_os_only=true > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
+  "$CHROMIUM_DIR/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=i386 > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
+  "$CHROMIUM_DIR/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=amd64 > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 fi
 
 # Sync the chromium build with the latest
@@ -144,7 +144,7 @@ choosecombo release aosp_${DEVICE} user > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$
 # Download and move the vendor specific folder
 echo ">> [$(date)] Downloading vendor specific files" | tee -a "$STDOUT_LOG"
 cd "$SRC_DIR"
-"$SRC_DIR/vendor/android-prepare-vendor/execute-all.sh" -d ${DEVICE} -b ${BUILD_ID} -o "$SRC_DIR/vendor/android-prepare-vendor"
+"$SRC_DIR/vendor/android-prepare-vendor/execute-all.sh" -d ${DEVICE} -b ${BUILD_ID} -o "$SRC_DIR/vendor/android-prepare-vendor" > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 mkdir -p "$SRC_DIR/vendor/google_devices"
 rm -rf "$SRC_DIR/vendor/google_devices/${DEVICE}"
 mv "$SRC_DIR/vendor/android-prepare-vendor/${DEVICE}/$(echo $BUILD_ID | tr '[:upper:]' '[:lower:]')/vendor/google_devices/${DEVICE}" "$SRC_DIR/vendor/google_devices"
@@ -162,6 +162,7 @@ fi
 
 # OPEN_GAPPS takes priority
 if [[ $OPEN_GAPPS = "yes" ]]; then
+  echo ">> [$(date)] Adding GAPPS into the build" | tee -a "$STDOUT_LOG"
   # Special case for walleye (also known as wahoo)
   dev_name="$DEVICE"
   if [[ $DEVICE = "walleye" ]]; then
@@ -182,8 +183,8 @@ if [[ $OPEN_GAPPS = "yes" ]]; then
 else
   # If needed, apply the microG's signature spoofing patch
   if [[ $SIGNATURE_SPOOFING = "yes" ]]; then
-    cd "$SRC_DIR/frameworks/base"
     echo ">> [$(date)] Applying the restricted signature spoofing patch to frameworks/base" | tee -a "$STDOUT_LOG"
+    cd "$SRC_DIR/frameworks/base"
     sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/patches/android_frameworks_base-O.patch" | patch --quiet -p1
     git clean -q -f
   fi
@@ -196,6 +197,7 @@ else
 fi
 
 # Apply FDroid patch
+echo ">> [$(date)] Adding releasekey to the FDroid ClientWhitelist" | tee -a "$STDOUT_LOG"
 key=$(keytool -list -printcert -file "$KEYS_DIR/releasekey.x509.pem" | grep 'SHA256:' | tr -d ':' | cut -d' ' -f 3)
 sed -i -e "s/67760df25e94ae6c955d9e17ca1bc8e195da5d91d5a58023805ab3579463d1b8/${key}/g" "$SRC_DIR/packages/apps/F-Droid/privileged-extension/app/src/main/java/org/fdroid/fdroid/privileged/ClientWhitelist.java"
 
@@ -219,3 +221,6 @@ cd "$SRC_DIR/out/release-${DEVICE}-${BUILD_NUMBER}"
 cp -f *.zip "$ZIP_DIR"
 cp -f *.tar.xz "$ZIP_DIR"
 cp -f "$CHROMIUM_DIR/src/out/Default/apks/MonochromePublic.apk" "$ZIP_DIR/MonochromePublic_${CHROMIUM_RELEASE_NAME}.apk"
+
+# Build is complete
+echo ">> [$(date)] Build is complete. Enjoy!" | tee -a "$STDOUT_LOG"
