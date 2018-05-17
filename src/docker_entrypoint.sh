@@ -1,12 +1,6 @@
 #!/bin/bash
 set -e
 
-# We only support the pixel devices
-if [[ $DEVICE != "sailfish" ]] && [[ $DEVICE != "marlin" ]] && [[ $DEVICE != "walleye" ]] && [[ $DEVICE != "taimen" ]]; then
-  echo ">> [$(date)] Currently this container only supports building for pixel devices" | tee -a "$STDERR_LOG"
-  exit 1
-fi
-
 # Setup global variables
 BIG_BROTHER=""
 if [[ $DEVICE = "walleye" ]]; then
@@ -14,8 +8,16 @@ if [[ $DEVICE = "walleye" ]]; then
 elif [[ $DEVICE = "sailfish" ]]; then
   BIG_BROTHER="marlin"
 fi
-STDOUT_LOG="${LOGS_DIR}/stdout_$(date).log"
-STDERR_LOG="${LOGS_DIR}/stderr_$(date).log"
+
+NOW=$(date +'%Y-%m-%d-%H:%M:%S')
+STDOUT_LOG="${LOGS_DIR}/stdout_${NOW}.log"
+STDERR_LOG="${LOGS_DIR}/stderr_${NOW}.log"
+
+# We only support the pixel devices
+if [[ $DEVICE != "sailfish" ]] && [[ $DEVICE != "marlin" ]] && [[ $DEVICE != "walleye" ]] && [[ $DEVICE != "taimen" ]]; then
+  echo ">> [$(date)] Currently this container only supports building for pixel devices" | tee -a "$STDERR_LOG"
+  exit 1
+fi
 
 # Initialize Git user information
 git config --global user.name $USER_NAME
