@@ -3,7 +3,7 @@ set -e
 
 # We only support the pixel devices
 if [[ $DEVICE != "sailfish" ]] && [[ $DEVICE != "marlin" ]] && [[ $DEVICE != "walleye" ]] && [[ $DEVICE != "taimen" ]]; then
-  echo ">> [$(date)] Currently this container only supports building for pixel devices"
+  echo ">> [$(date)] Currently this container only supports building for pixel devices" | tee -a "$STDERR_LOG"
   exit 1
 fi
 
@@ -29,17 +29,17 @@ repo init -u https://github.com/CopperheadOS/platform_manifest.git -b refs/tags/
 # Copy over the local_manifests
 mkdir -p "$SRC_DIR/.repo/local_manifests"
 rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" "$SRC_DIR/.repo/local_manifests/"
-stderr.txt
+
 # Clean out any changes
-echo ">> [$(date)] Reseting repos"
+echo ">> [$(date)] Reseting repos" | tee -a "$STDOUT_LOG"
 repo forall -c 'git reset --hard ; git clean -fd' > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Sync work dir
 repo sync --force-sync -j${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Verify signatures for all repo tags
-echo ">> [$(date)] Verifying tag signatures for all repositories"
-repo forall -c 'git verify-tag --raw $(git describe)' || { echo ">> [$(date)] Tags could not be verified"; exit 1; }
+echo ">> [$(date)] Verifying tag signatures for all repositories" | tee -a "$STDOUT_LOG"
+repo forall -c 'git verify-tag --raw $(git describe)' || { echo ">> [$(date)] Tags could not be verified" | tee -a "$STDERR_LOG"; exit 1; }
 
 # Ensure we have the correct keys
 if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
@@ -50,28 +50,28 @@ fi
 
 # Check to make sure we have the correct keys
 if [[ -z "$(ls -A $KEYS_DIR)" ]]; then
-  echo ">> [$(date)] Generating new keys"
+  echo ">> [$(date)] Generating new keys" | tee -a "$STDOUT_LOG"
   for c in "${keys[@]}"; do
-    echo ">> [$(date)]  Generating $c..."
+    echo ">> [$(date)]  Generating $c..." | tee -a "$STDOUT_LOG"
     "$SRC_DIR/development/tools/make_key" "$KEYS_DIR/$c" "$KEYS_SUBJECT" <<< '' &> /dev/null || true
   done
 else
-  echo ">> [$(date)] Ensuring all keys are in $KEYS_DIR"
+  echo ">> [$(date)] Ensuring all keys are in $KEYS_DIR" | tee -a "$STDOUT_LOG"
   for c in "${keys[@]}"; do
     for e in pk8 x509.pem; do
       if [[ ! -f $KEYS_DIR/$c.$e ]]; then
-        echo ">> [$(date)] $KEYS_DIR/$c.$e is missing"
+        echo ">> [$(date)] $KEYS_DIR/$c.$e is missing" | tee -a "$STDERR_LOG"
         exit 1
       fi
     done
   done
-  echo ">> [$(date)] Keys verified"
+  echo ">> [$(date)] Keys verified" | tee -a "$STDOUT_LOG"
 fi
 
 # Generate avb.pem and avb_pkmd.bin for walleye and taimen
 if [[ $DEVICE = "walleye" ]] || [[ $DEVICE = "taimen" ]]; then
   if [[ ! -f $KEYS_DIR/avb.pem ]]; then
-    echo ">> [$(date)]  Generating avb.pem..."
+    echo ">> [$(date)]  Generating avb.pem..." | tee -a "$STDOUT_LOG"
     openssl genrsa -out "$KEYS_DIR/avb.pem" 2048
   fi
 
@@ -91,6 +91,7 @@ fi
 
 # Do the inital fetch and setup of the chromium build
 if [[ -z "$(ls -A $CHROMIUM_DIR)" ]]; then
+  echo ">> [$(date)] Doing inital fetch of the chromium project" | tee -a "$STDOUT_LOG"
   cd "$CHROMIUM_DIR"
   fetch --nohooks android --target_os_only=true
   "$CHROMIUM_DIR/src/build/linux/sysroot_scripts/install-sysroot.py" --arch=i386
@@ -98,6 +99,7 @@ if [[ -z "$(ls -A $CHROMIUM_DIR)" ]]; then
 fi
 
 # Sync the chromium build with the latest
+echo ">> [$(date)] Reverting and syncing the chromium project" | tee -a "$STDOUT_LOG"
 cd "$CHROMIUM_DIR/src"
 yes | gclient revert --jobs ${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 yes | gclient sync --with_branch_heads -r ${CHROMIUM_RELEASE_NAME} --jobs ${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
@@ -114,12 +116,12 @@ else
 fi
 
 # Apply the patches
-echo ">> [$(date)] Applying chromium patches"
+echo ">> [$(date)] Applying chromium patches" | tee -a "$STDOUT_LOG"
 cd "$CHROMIUM_DIR/src"
 git am "$CHROMIUM_DIR"/chromium_patches/*.patch > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Generate build args and build chromium apk
-echo ">> [$(date)] Building chromium apk"
+echo ">> [$(date)] Building Chromium" | tee -a "$STDOUT_LOG"
 cd "$CHROMIUM_DIR/src"
 if [[ $USE_CCACHE = 1 ]]; then
   cc_wrapper_arg='cc_wrapper = "/srv/src/prebuilts/misc/linux-x86/ccache/ccache"'
@@ -138,7 +140,7 @@ source script/copperhead.sh > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 
 choosecombo release aosp_${DEVICE} user > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Download and move the vendor specific folder
-echo ">> [$(date)] Downloading vendor specific files"
+echo ">> [$(date)] Downloading vendor specific files" | tee -a "$STDOUT_LOG"
 cd "$SRC_DIR"
 "$SRC_DIR/vendor/android-prepare-vendor/execute-all.sh" -d ${DEVICE} -b ${BUILD_ID} -o "$SRC_DIR/vendor/android-prepare-vendor"
 mkdir -p "$SRC_DIR/vendor/google_devices"
@@ -179,14 +181,14 @@ else
   # If needed, apply the microG's signature spoofing patch
   if [[ $SIGNATURE_SPOOFING = "yes" ]]; then
     cd "$SRC_DIR/frameworks/base"
-    echo ">> [$(date)] Applying the restricted signature spoofing patch to frameworks/base"
+    echo ">> [$(date)] Applying the restricted signature spoofing patch to frameworks/base" | tee -a "$STDOUT_LOG"
     sed 's/android:protectionLevel="dangerous"/android:protectionLevel="signature|privileged"/' "/root/patches/android_frameworks_base-O.patch" | patch --quiet -p1
     git clean -q -f
   fi
 
   # Add custom packages to be installed
   if [[ ! -z $CUSTOM_PACKAGES ]]; then
-    echo ">> [$(date)] Adding custom packages ($CUSTOM_PACKAGES)"
+    echo ">> [$(date)] Adding custom packages ($CUSTOM_PACKAGES)" | tee -a "$STDOUT_LOG"
     sed -i "1s;^;PRODUCT_PACKAGES += $CUSTOM_PACKAGES\n\n;" "$SRC_DIR/build/target/product/core.mk"
   fi
 fi
@@ -196,6 +198,7 @@ key=$(keytool -list -printcert -file "$KEYS_DIR/releasekey.x509.pem" | grep 'SHA
 sed -i -e "s/67760df25e94ae6c955d9e17ca1bc8e195da5d91d5a58023805ab3579463d1b8/${key}/g" "$SRC_DIR/packages/apps/F-Droid/privileged-extension/app/src/main/java/org/fdroid/fdroid/privileged/ClientWhitelist.java"
 
 # Build target files
+echo ">> [$(date)] Building target files for device" | tee -a "$STDOUT_LOG"
 cd "$SRC_DIR"
 make target-files-package -j${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 make brillo_update_payload -j${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
@@ -205,9 +208,11 @@ mkdir -p "$SRC_DIR/keys"
 ln -sf "$KEYS_DIR" "$SRC_DIR/keys/${DEVICE}"
 
 # Generate release files from target files
+echo ">> [$(date)] Generating release files" | tee -a "$STDOUT_LOG"
 script/release.sh ${DEVICE} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Move archives files to ZIP_DIR
+echo ">> [$(date)] Moving archives to zip directory" | tee -a "$STDOUT_LOG"
 cd "$SRC_DIR/out/release-${DEVICE}-${BUILD_NUMBER}"
 cp -f *.zip "$ZIP_DIR"
 cp -f *.tar.xz "$ZIP_DIR"
