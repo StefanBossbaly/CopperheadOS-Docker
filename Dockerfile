@@ -10,6 +10,7 @@ ENV CCACHE_DIR /srv/ccache
 ENV TMP_DIR /srv/tmp
 ENV KEYS_DIR /srv/keys
 ENV LMANIFEST_DIR /srv/local_manifests
+ENV LOGS_DIR /srv/logs
 ENV ZIP_DIR /srv/zips
 
 # By default we want to use CCACHE, you can disable this
@@ -68,6 +69,7 @@ VOLUME $CCACHE_DIR
 VOLUME $TMP_DIR
 VOLUME $KEYS_DIR
 VOLUME $LMANIFEST_DIR
+VOLUME $LOGS_DIR
 VOLUME $ZIP_DIR
 
 ########################################################
@@ -84,6 +86,7 @@ RUN mkdir -p $CCACHE_DIR
 RUN mkdir -p $TMP_DIR
 RUN mkdir -p $KEYS_DIR
 RUN mkdir -p $LMANIFEST_DIR
+RUN mkdir -p $LOGS_DIR
 RUN mkdir -p $ZIP_DIR
 
 ########################################################
