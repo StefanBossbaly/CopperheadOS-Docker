@@ -4,14 +4,14 @@ Docker container for building CopperheadOS. Still very much a work in progress
 ## Enviroment Variables
 
 ### `USE_CCACHE`
-Enable or disable using `ccache`. Can significantly speed up later builds for both 
+Enable or disable using `ccache`. Can significantly speed up later builds for both
 the CopperheadOS and chromium build processes. All cache files are saved to `CCACHE_DIR`.
 Defaults to the value of 1.
 
 ### `CCACHE_SIZE`
 If `USE_CCACHE` is true this variable determines the size of the ccache.
 This value should be a number followed by an optional suffix: "k", "M", "G", "T".
-The default suffix is G. Use 0 for no limit. Defaults to the value of "50G". 
+The default suffix is G. Use 0 for no limit. Defaults to the value of "50G".
 
 ### `SIGNATURE_SPOOFING`
 If set, privileged apps will be allowed to spoof their signature. This is needed
@@ -70,6 +70,9 @@ Location of the temporary directory.
 ### `/srv/local_manifests`
 Location of any custom manifests that will be included when syncing repos.
 
+### `/srv/logs`
+Location of where the stdout and stderr logs will be saved to.
+
 ### `/srv/zips`
 Location of where the output `*.zips` and `*.xz` files will be copied to after the
 build process is complete. Will include the target files and packages derived from
@@ -87,6 +90,7 @@ $ sudo docker run \
     -v /media/hdd/copperheados/ccache:/srv/ccache \
     -v /media/hdd/copperheados/keys:/srv/keys \
     -v /media/hdd/copperheados/tmp:/srv/tmp \
+    -v /media/hdd/copperheados/logs:/srv/logs \
     -v /media/hdd/copperheados/zips:/srv/zips \
     -e USE_CCACHE=1 \
     -e CCACHE_SIZE="70G" \
@@ -115,6 +119,7 @@ $ sudo docker run \
     -v /media/hdd/copperheados/keys:/srv/keys \
     -v /media/hdd/copperheados/tmp:/srv/tmp \
     -v /media/hdd/CopperheadOS-Docker/local_manifest/prebuilt:/srv/local_manifests \
+    -v /media/hdd/copperheados/logs:/srv/logs \
     -v /media/hdd/copperheados/zips:/srv/zips \
     -e USE_CCACHE=1 \
     -e CCACHE_SIZE="70G" \
@@ -140,6 +145,7 @@ $ sudo docker run \
     -v /media/hdd/copperheados/keys:/srv/keys \
     -v /media/hdd/copperheados/tmp:/srv/tmp \
     -v /media/hdd/CopperheadOS-Docker/local_manifest/opengapps:/srv/local_manifests \
+    -v /media/hdd/copperheados/logs:/srv/logs \
     -v /media/hdd/copperheados/zips:/srv/zips \
     -e USE_CCACHE=1 \
     -e CCACHE_SIZE="70G" \
