@@ -14,6 +14,8 @@ if [[ $DEVICE = "walleye" ]]; then
 elif [[ $DEVICE = "sailfish" ]]; then
   BIG_BROTHER="marlin"
 fi
+STDOUT_LOG="${LOGS_DIR}/stdout_$(date).log"
+STDERR_LOG="${LOGS_DIR}/stderr_$(date).log"
 
 # Initialize Git user information
 git config --global user.name $USER_NAME
@@ -22,18 +24,18 @@ git config --global color.ui false
 
 # (Re)Initialize repo
 cd "$SRC_DIR"
-repo init -u https://github.com/CopperheadOS/platform_manifest.git -b refs/tags/${BUILD_TAG}
+repo init -u https://github.com/CopperheadOS/platform_manifest.git -b refs/tags/${BUILD_TAG} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Copy over the local_manifests
 mkdir -p "$SRC_DIR/.repo/local_manifests"
 rsync -a --delete --include '*.xml' --exclude '*' "$LMANIFEST_DIR/" "$SRC_DIR/.repo/local_manifests/"
-
+stderr.txt
 # Clean out any changes
 echo ">> [$(date)] Reseting repos"
-repo forall -c 'git reset -q --hard ; git clean -q -fd'
+repo forall -c 'git reset --hard ; git clean -fd' > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Sync work dir
-repo sync --force-sync -j${NUM_OF_THREADS}
+repo sync --force-sync -j${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Verify signatures for all repo tags
 echo ">> [$(date)] Verifying tag signatures for all repositories"
@@ -97,24 +99,24 @@ fi
 
 # Sync the chromium build with the latest
 cd "$CHROMIUM_DIR/src"
-yes | gclient revert --jobs ${NUM_OF_THREADS}
-yes | gclient sync --with_branch_heads -r ${CHROMIUM_RELEASE_NAME} --jobs ${NUM_OF_THREADS}
+yes | gclient revert --jobs ${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
+yes | gclient sync --with_branch_heads -r ${CHROMIUM_RELEASE_NAME} --jobs ${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Clone or pull latest of the chromium patches
 if [[ ! -d $CHROMIUM_DIR/chromium_patches ]]; then
   cd "$CHROMIUM_DIR"
-  git clone https://github.com/CopperheadOS/chromium_patches.git
+  git clone https://github.com/CopperheadOS/chromium_patches.git > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 else
   cd "$CHROMIUM_DIR/chromium_patches"
-  git reset -q --hard
-  git clean -q -fd
-  git pull
+  git reset --hard > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
+  git clean -fd > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
+  git pull > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 fi
 
 # Apply the patches
 echo ">> [$(date)] Applying chromium patches"
 cd "$CHROMIUM_DIR/src"
-git am "$CHROMIUM_DIR"/chromium_patches/*.patch
+git am "$CHROMIUM_DIR"/chromium_patches/*.patch > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Generate build args and build chromium apk
 echo ">> [$(date)] Building chromium apk"
@@ -125,15 +127,15 @@ else
   cc_wrapper_arg=""
 fi
 gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "'${CHROMIUM_RELEASE_NAME}'" android_default_version_code = "'${CHROMIUM_RELEASE_CODE}'" '"${cc_wrapper_arg}" out/Default
-ninja -C out/Default/ monochrome_public_apk
+ninja -C out/Default/ monochrome_public_apk > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Copy the apk over to the prebuilts
 cp -f "$CHROMIUM_DIR/src/out/Default/apks/MonochromePublic.apk" "$SRC_DIR/external/chromium/prebuilt/arm64/MonochromePublic.apk"
 
 # Select device
 cd "$SRC_DIR"
-source script/copperhead.sh
-choosecombo release aosp_${DEVICE} user
+source script/copperhead.sh > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
+choosecombo release aosp_${DEVICE} user > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Download and move the vendor specific folder
 echo ">> [$(date)] Downloading vendor specific files"
@@ -162,7 +164,7 @@ if [[ $OPEN_GAPPS = "yes" ]]; then
     dev_name="wahoo"
   fi
 
-  # Add GAPPS_VARIANT += pico and call to vendor/opengapps/build/opengapps-packages.mk hook at the end 
+  # Add GAPPS_VARIANT += pico and call to vendor/opengapps/build/opengapps-packages.mk hook at the end
   sed -i "1s;^;GAPPS_VARIANT += pico\n\n;" "$SRC_DIR/device/google/$dev_name/device.mk"
   echo '$(call inherit-product, vendor/opengapps/build/opengapps-packages.mk)' >> "$SRC_DIR/device/google/$dev_name/device.mk"
 
@@ -195,15 +197,15 @@ sed -i -e "s/67760df25e94ae6c955d9e17ca1bc8e195da5d91d5a58023805ab3579463d1b8/${
 
 # Build target files
 cd "$SRC_DIR"
-make target-files-package -j${NUM_OF_THREADS}
-make brillo_update_payload -j${NUM_OF_THREADS}
+make target-files-package -j${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
+make brillo_update_payload -j${NUM_OF_THREADS} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Link key directory
 mkdir -p "$SRC_DIR/keys"
 ln -sf "$KEYS_DIR" "$SRC_DIR/keys/${DEVICE}"
 
 # Generate release files from target files
-script/release.sh ${DEVICE}
+script/release.sh ${DEVICE} > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
 # Move archives files to ZIP_DIR
 cd "$SRC_DIR/out/release-${DEVICE}-${BUILD_NUMBER}"
