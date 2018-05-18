@@ -138,6 +138,11 @@ choosecombo release aosp_${DEVICE} user
 # Download and move the vendor specific folder
 echo ">> [$(date)] Downloading vendor specific files"
 cd "$SRC_DIR"
+
+# TODO Remove once issue is resolved
+# https://github.com/anestisb/android-prepare-vendor/issues/126
+cp -f /root/workarounds/download-nexus-images.sh "$SRC_DIR/vendor/android-prepare-vendor/scripts/download-nexus-image.sh"
+
 "$SRC_DIR/vendor/android-prepare-vendor/execute-all.sh" -d ${DEVICE} -b ${BUILD_ID} -o "$SRC_DIR/vendor/android-prepare-vendor"
 mkdir -p "$SRC_DIR/vendor/google_devices"
 rm -rf "$SRC_DIR/vendor/google_devices/${DEVICE}"
@@ -162,7 +167,7 @@ if [[ $OPEN_GAPPS = "yes" ]]; then
     dev_name="wahoo"
   fi
 
-  # Add GAPPS_VARIANT += pico and call to vendor/opengapps/build/opengapps-packages.mk hook at the end 
+  # Add GAPPS_VARIANT += pico and call to vendor/opengapps/build/opengapps-packages.mk hook at the end
   sed -i "1s;^;GAPPS_VARIANT += pico\n\n;" "$SRC_DIR/device/google/$dev_name/device.mk"
   echo '$(call inherit-product, vendor/opengapps/build/opengapps-packages.mk)' >> "$SRC_DIR/device/google/$dev_name/device.mk"
 
