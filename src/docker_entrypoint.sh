@@ -133,8 +133,9 @@ fi
 gn gen --args='target_os="android" target_cpu = "arm64" is_debug = false is_official_build = true is_component_build = false symbol_level = 0 ffmpeg_branding = "Chrome" proprietary_codecs = true android_channel = "stable" android_default_version_name = "'${CHROMIUM_RELEASE_NAME}'" android_default_version_code = "'${CHROMIUM_RELEASE_CODE}'" '"${cc_wrapper_arg}" out/Default
 ninja -C out/Default/ monochrome_public_apk > >(tee -a "$STDOUT_LOG") 2> >(tee -a "$STDERR_LOG" 1>&2)
 
-# Copy the apk over to the prebuilts
+# Copy the apk over to the prebuilts and archive directory
 cp -f "$CHROMIUM_DIR/src/out/Default/apks/MonochromePublic.apk" "$SRC_DIR/external/chromium/prebuilt/arm64/MonochromePublic.apk"
+cp -f "$CHROMIUM_DIR/src/out/Default/apks/MonochromePublic.apk" "$ZIP_DIR/MonochromePublic_${CHROMIUM_RELEASE_NAME}.apk"
 
 # Select device
 cd "$SRC_DIR"
@@ -220,7 +221,6 @@ echo ">> [$(date)] Moving archives to zip directory" | tee -a "$STDOUT_LOG"
 cd "$SRC_DIR/out/release-${DEVICE}-${BUILD_NUMBER}"
 cp -f *.zip "$ZIP_DIR"
 cp -f *.tar.xz "$ZIP_DIR"
-cp -f "$CHROMIUM_DIR/src/out/Default/apks/MonochromePublic.apk" "$ZIP_DIR/MonochromePublic_${CHROMIUM_RELEASE_NAME}.apk"
 
 # Build is complete
 echo ">> [$(date)] Build is complete. Enjoy!" | tee -a "$STDOUT_LOG"
